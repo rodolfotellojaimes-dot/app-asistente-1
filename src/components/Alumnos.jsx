@@ -164,41 +164,84 @@ const Alumnos = () => {
 
     const handleFileUpload = (e) => {
         const file = e.target.files[0];
+        if (!file) return;
+
         const reader = new FileReader();
         reader.onload = async (evt) => {
+            setLoading(true);
             try {
                 const bstr = evt.target.result;
                 const wb = XLSX.read(bstr, { type: 'binary' });
                 const wsname = wb.SheetNames[0];
                 const data = XLSX.utils.sheet_to_json(wb.Sheets[wsname]);
 
-                // Preparar datos para Supabase
-                const alumnosToInsert = data.map(item => ({
-                    name: `${item.apellidos || ''}, ${item.nombres || ''}`,
-                    grade: (item.grado || '').toString(),
-                    section: item.seccion || '',
-                    dni: item.dni ? item.dni.toString() : null,
-                    parent_phone: item.ncelular ? item.ncelular.toString() : null,
-                    apoderado: item.apoderado || null,
-                    phone2: item.ncelular2 ? item.ncelular2.toString() : null,
-                    direccion: item.direccion || null,
-                    status: 'active'
-                }));
+                if (data.length === 0) {
+                    throw new Error("El archivo Excel está vacío.");
+                }
 
-                if (alumnosToInsert.length > 0) {
-                    setLoading(true);
-                    const { error } = await supabase.from('students').insert(alumnosToInsert);
+                // 1. Obtener DNIs existentes para validación de duplicados
+                const { data: existingStudents } = await supabase.from('students').select('dni');
+                const existingDnis = new Set(existingStudents.map(s => s.dni));
+
+                // 2. Preparar y Validar Datos
+                const nuevos = [];
+                const duplicados = [];
+                const incompletos = [];
+
+                data.forEach((item, index) => {
+                    const dni = item.dni ? item.dni.toString().trim() : null;
+                    const apellidos = item.apellidos || '';
+                    const nombres = item.nombres || '';
+                    const grado = item.grado ? item.grado.toString() : '';
+                    const seccion = item.seccion || '';
+
+                    if (!apellidos || !nombres || !grado || !seccion) {
+                        incompletos.push(index + 2); // +2 por fila Excel
+                        return;
+                    }
+
+                    if (dni && existingDnis.has(dni)) {
+                        duplicados.push(dni);
+                        return;
+                    }
+
+                    nuevos.push({
+                        name: `${apellidos}, ${nombres}`,
+                        grade: grado,
+                        section: seccion,
+                        dni: dni,
+                        parent_phone: item.ncelular ? item.ncelular.toString() : null,
+                        apoderado: item.apoderado || null,
+                        phone2: item.ncelular2 ? item.ncelular2.toString() : null,
+                        direccion: item.direccion || null,
+                        status: 'active'
+                    });
+                });
+
+                // 3. Informar y Guardar
+                let msg = `Se encontraron ${nuevos.length} alumnos nuevos.`;
+                if (duplicados.length > 0) msg += `\n- ${duplicados.length} ya existen (DNI duplicado).`;
+                if (incompletos.length > 0) msg += `\n- ${incompletos.length} filas incompletas (filas: ${incompletos.join(', ')}).`;
+
+                if (nuevos.length === 0) {
+                    alert(msg + "\nNo hay datos nuevos para importar.");
+                    return;
+                }
+
+                if (window.confirm(msg + "\n\n¿Desea proceder con la importación?")) {
+                    const { error } = await supabase.from('students').insert(nuevos);
                     if (error) throw error;
-
-                    alert(`${alumnosToInsert.length} alumnos importados correctamente`);
+                    alert(`¡Éxito! ${nuevos.length} alumnos importados.`);
                     fetchAlumnos();
                     setActiveTab('ver');
                 }
+
             } catch (err) {
                 console.error("Error importando Excel:", err);
-                alert("Error al procesar o guardar los datos del Excel: " + err.message);
+                alert("Error: " + err.message);
             } finally {
                 setLoading(false);
+                e.target.value = null; // Reset input
             }
         };
         reader.readAsBinaryString(file);
@@ -338,16 +381,37 @@ const Alumnos = () => {
                 )}
 
                 {activeTab === 'masivo' && (
-                    <div style={{ textAlign: 'center', padding: '40px' }}>
-                        <h3 style={{ marginBottom: '20px' }}>Carga Masiva</h3>
-                        <div style={{ display: 'flex', justifyContent: 'center', gap: '20px' }}>
-                            <button onClick={downloadTemplate} className="btn" style={{ background: 'var(--glass-bg)' }}><Download size={18} /> Plantilla</button>
+                    <div style={{ textAlign: 'center', padding: '40px', maxWidth: '600px', margin: '0 auto' }}>
+                        <div style={{ marginBottom: '30px', background: 'rgba(255,255,255,0.03)', padding: '20px', borderRadius: '15px', border: '1px dashed var(--glass-border)' }}>
+                            <FileUp size={48} className="text-gradient" style={{ marginBottom: '15px', opacity: 0.5 }} />
+                            <h3 style={{ marginBottom: '10px' }}>Carga Masiva de Alumnos</h3>
+                            <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
+                                Sube archivos Excel (.xlsx) con los datos de tus estudiantes.
+                                Asegúrate de usar los nombres de columnas correctos.
+                            </p>
+                        </div>
+
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                             <div style={{ position: 'relative' }}>
-                                <input type="file" accept=".xlsx" onChange={handleFileUpload} style={{ position: 'absolute', opacity: 0, width: '100%', cursor: 'pointer' }} />
-                                <button className="btn btn-primary" disabled={loading}>
-                                    <FileUp size={18} /> {loading ? 'Subiendo...' : 'Subir Excel'}
+                                <input
+                                    type="file"
+                                    accept=".xlsx, .xls"
+                                    onChange={handleFileUpload}
+                                    style={{ position: 'absolute', opacity: 0, width: '100%', height: '100%', cursor: 'pointer', zIndex: 2 }}
+                                    disabled={loading}
+                                />
+                                <button className="btn btn-primary" style={{ width: '100%', padding: '15px' }} disabled={loading}>
+                                    <FileUp size={20} /> {loading ? 'Procesando...' : 'Seleccionar Archivo Excel'}
                                 </button>
                             </div>
+
+                            <button onClick={downloadTemplate} className="btn" style={{ background: 'var(--glass-bg)', width: '100%' }}>
+                                <Download size={20} /> Descargar Plantilla Sugerida
+                            </button>
+                        </div>
+
+                        <div style={{ marginTop: '30px', textAlign: 'left', fontSize: '0.8rem', opacity: 0.6 }}>
+                            <p><strong>Columnas aceptadas:</strong> apellidos, nombres, grado, seccion, dni, ncelular, apoderado, ncelular2, direccion.</p>
                         </div>
                     </div>
                 )}
