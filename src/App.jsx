@@ -1,4 +1,6 @@
+// Iniciando despliegue en Vercel con variables de entorno
 import React, { useState, useEffect } from 'react';
+
 import Login from './components/Login';
 import Alumnos from './components/Alumnos';
 import Asistencia from './components/Asistencia';
