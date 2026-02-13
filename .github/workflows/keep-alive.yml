@@ -9,7 +9,7 @@ on:
 jobs:
   ping:
     runs-on: ubuntu-latest
-    environment: production # Esto permite usar los secretos que guardaste en "PRODUCTION"
+    environment: PRODUCTION # Cambiado a MAYÚSCULAS para coincidir con lo que hiciste en GitHub
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
