@@ -9,7 +9,7 @@ on:
 jobs:
   ping:
     runs-on: ubuntu-latest
-    environment: PRODUCTION # Cambiado a MAYÚSCULAS para coincidir con lo que hiciste en GitHub
+    # Intentamos quitar la restricción de 'environment' por si acaso
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -24,6 +24,9 @@ jobs:
 
       - name: Run keep-alive script
         env:
-          SUPABASE_URL: https://bgccgiabjvgysjdttgev.supabase.co
-          SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJnY2NnaWFianZneXNqZHR0Z2V2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAxNTUyOTQsImV4cCI6MjA4NTczMTI5NH0.lxf0qYJfFgcLnZLWEpeVVFeOKPvHCgSAeHMkJ7OMCLY
+          # Pasamos todas las variantes posibles de nombres
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL || secrets.VITE_SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_SUPABASE_URL: ${{ secrets.SUPABASE_URL || secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || secrets.VITE_SUPABASE_ANON_KEY }}
         run: node scripts/keep-alive.js
