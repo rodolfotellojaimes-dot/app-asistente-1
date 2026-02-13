@@ -12,20 +12,26 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg', 'logo.png'],
       manifest: {
-        name: 'Asistente Docente IEI Pedro Sánchez Gavidia',
-        short_name: 'Asistente Docente',
-        description: 'Aplicación de gestión docente: Alumnos, Asistencia, Logros e Incidencias',
+        name: 'Asistente Docente Digital',
+        short_name: 'Asistente',
+        description: 'Gestión docente IEI Pedro Sánchez Gavidia',
         theme_color: '#2e7d32',
+        background_color: '#ffffff',
+        display: 'standalone',
+        start_url: '/',
+        scope: '/',
         icons: [
           {
             src: 'logo.png',
             sizes: '192x192',
-            type: 'image/png'
+            type: 'image/png',
+            purpose: 'any maskable'
           },
           {
             src: 'logo.png',
             sizes: '512x512',
-            type: 'image/png'
+            type: 'image/png',
+            purpose: 'any maskable'
           }
         ]
       }
