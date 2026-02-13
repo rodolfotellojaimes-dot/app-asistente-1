@@ -2,13 +2,14 @@ name: Supabase Keep-Alive
 
 on:
   schedule:
-    # Se ejecuta a las 00:00 UTC cada 3 días
-    - cron: '0 0 */3 * *'
+    # Se ejecuta a las 00:00 UTC todos los días
+    - cron: '0 0 * * *'
   workflow_dispatch: # Permite ejecución manual
 
 jobs:
   ping:
     runs-on: ubuntu-latest
+    environment: production # Esto permite usar los secretos que guardaste en "PRODUCTION"
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
