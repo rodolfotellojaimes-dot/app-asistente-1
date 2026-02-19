@@ -6,9 +6,10 @@ import Alumnos from './components/Alumnos';
 import Asistencia from './components/Asistencia';
 import Logros from './components/Logros';
 import Incidencias from './components/Incidencias';
+import AtencionPadres from './components/AtencionPadres';
 import Usuarios from './components/Usuarios';
 import Sedes from './components/Sedes';
-import { Users, ClipboardCheck, TrendingUp, AlertCircle, Home, LogOut, UserCog, MapPin } from 'lucide-react';
+import { Users, ClipboardCheck, TrendingUp, AlertCircle, Home, LogOut, UserCog, MapPin, Handshake } from 'lucide-react';
 import logo from './assets/logo.png';
 import './index.css';
 
@@ -57,6 +58,7 @@ function App() {
     { id: 'asistencia', name: 'Asistencia', icon: <ClipboardCheck size={32} />, color: '280, 80%, 65%' },
     { id: 'logros', name: 'Avances de Logro', icon: <TrendingUp size={32} />, color: '190, 90%, 50%' },
     { id: 'incidencias', name: 'Registro de Incidencias', icon: <AlertCircle size={32} />, color: '20, 80%, 60%' },
+    { id: 'atencion-padres', name: 'Atención a Padres', icon: <Handshake size={32} />, color: '150, 70%, 50%' },
     { id: 'usuarios', name: 'Gestión de Usuarios', icon: <UserCog size={32} />, color: '220, 70%, 50%' },
     { id: 'sedes', name: 'Registro de Sedes', icon: <MapPin size={32} />, color: '30, 80%, 55%' },
   ];
@@ -71,6 +73,8 @@ function App() {
         return <Logros />;
       case 'incidencias':
         return <Incidencias currentUser={user} />;
+      case 'atencion-padres':
+        return <AtencionPadres currentUser={user} />;
       case 'usuarios':
         return <Usuarios />;
       case 'sedes':
