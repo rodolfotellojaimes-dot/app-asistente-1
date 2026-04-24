@@ -4,6 +4,7 @@ import { Search, TrendingUp, Save, Trash2, CheckCircle, FileDown, Filter, Layout
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
+import logo from '../assets/logo.png';
 import { supabase } from '../lib/supabase';
 
 const Logros = () => {
@@ -33,7 +34,7 @@ const Logros = () => {
         'Matemática', 'Comunicación', 'Inglés', 'Arte y Cultura',
         'Ciencias Sociales', 'Desarrollo Personal, Ciudadanía y Cívica (DPCC)',
         'Educación Física', 'Educación Religiosa', 'Ciencia y Tecnología',
-        'Educación para el Trabajo'
+        'Educación para el Trabajo', 'Tutoría', 'Registro Auxiliar'
     ];
 
     const meses = [
@@ -253,17 +254,38 @@ const Logros = () => {
         const isSesion = activeTab === 'sesion';
         const doc = new jsPDF(isSesion ? 'p' : 'l', 'mm', 'a4');
         
+        // --- BRANDED HEADER ---
+        try {
+            doc.addImage(logo, 'PNG', 14, 10, 15, 15);
+        } catch (e) {
+            console.error("Logo error:", e);
+        }
+        
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(16);
+        doc.setTextColor(45, 90, 80);
+        doc.text('ASISTENTE DOCENTE DIGITAL', 35, 16);
+        
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(100);
+        doc.text('IEI Pedro Sánchez Gavidia - Huánuco', 35, 22);
+        
         const title = isSesion 
             ? `REPORTE DE SESIÓN ${filterSesionNum} - ${selectedDate}`
-            : `INFORME DE AVANCES DE LOGRO - ${meses[filterMes].toUpperCase()}`;
+            : `INFORME DE AVANCES DE LOGRO - ${meses[filterMes].toUpperCase()} (${new Date().getFullYear()})`;
+        
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(0);
+        doc.text(title, 14, 35);
         
         const subtitle = `Grado: ${filterGrado}° | Sección: ${filterSeccion} | Área: ${filterArea}`;
-
-        doc.setFontSize(16);
-        doc.text(title, 14, 15);
         doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
         doc.setTextColor(100);
-        doc.text(subtitle, 14, 22);
+        doc.text(subtitle, 14, 42);
+        // ----------------------
 
         let headers, data;
 
@@ -280,12 +302,12 @@ const Logros = () => {
         }
 
         autoTable(doc, {
-            startY: 28,
+            startY: 48,
             head: headers,
             body: data,
             theme: 'grid',
             styles: { fontSize: isSesion ? 10 : 7, halign: 'center' },
-            headStyles: { fillColor: [45, 90, 80] },
+            headStyles: { fillColor: [45, 90, 80], textColor: 255 },
             columnStyles: { 1: { halign: 'left', minWidth: isSesion ? 80 : 50 } },
             didParseCell: (data) => {
                 if (data.section === 'body' && (isSesion ? data.column.index === 2 : data.column.index > 1)) {

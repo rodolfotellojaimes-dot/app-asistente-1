@@ -7,9 +7,12 @@ import Asistencia from './components/Asistencia';
 import Logros from './components/Logros';
 import Incidencias from './components/Incidencias';
 import AtencionPadres from './components/AtencionPadres';
+import TrabajoColegiado from './components/TrabajoColegiado';
+import ReunionesDocentes from './components/ReunionesDocentes';
+import ActividadesInstitucionales from './components/ActividadesInstitucionales';
 import Usuarios from './components/Usuarios';
 import Sedes from './components/Sedes';
-import { Users, ClipboardCheck, TrendingUp, AlertCircle, Home, LogOut, UserCog, MapPin, Handshake } from 'lucide-react';
+import { Users, ClipboardCheck, TrendingUp, AlertCircle, Home, LogOut, UserCog, MapPin, Handshake, Layout, MessageSquare, Award } from 'lucide-react';
 import logo from './assets/logo.png';
 import './index.css';
 
@@ -59,8 +62,11 @@ function App() {
     { id: 'logros', name: 'Avances de Logro', icon: <TrendingUp size={32} />, color: '190, 90%, 50%' },
     { id: 'incidencias', name: 'Registro de Incidencias', icon: <AlertCircle size={32} />, color: '20, 80%, 60%' },
     { id: 'atencion-padres', name: 'Atención a Padres', icon: <Handshake size={32} />, color: '150, 70%, 50%' },
-    { id: 'usuarios', name: 'Gestión de Usuarios', icon: <UserCog size={32} />, color: '220, 70%, 50%' },
-    { id: 'sedes', name: 'Registro de Sedes', icon: <MapPin size={32} />, color: '30, 80%, 55%' },
+    { id: 'trabajo-colegiado', name: 'Trabajo Colegiado', icon: <Layout size={32} />, color: '10, 80%, 50%' },
+    { id: 'reuniones-docentes', name: 'Reuniones Docentes', icon: <MessageSquare size={32} />, color: '200, 70%, 45%' },
+    { id: 'actividades-institucionales', name: 'Actividades Institucionales', icon: <Award size={32} />, color: '45, 90%, 50%' },
+    // { id: 'usuarios', name: 'Gestión de Usuarios', icon: <UserCog size={32} />, color: '220, 70%, 50%' },
+    // { id: 'sedes', name: 'Registro de Sedes', icon: <MapPin size={32} />, color: '30, 80%, 55%' },
   ];
 
   const renderModule = () => {
@@ -75,10 +81,18 @@ function App() {
         return <Incidencias currentUser={user} />;
       case 'atencion-padres':
         return <AtencionPadres currentUser={user} />;
+      case 'trabajo-colegiado':
+        return <TrabajoColegiado currentUser={user} />;
+      case 'reuniones-docentes':
+        return <ReunionesDocentes currentUser={user} />;
+      case 'actividades-institucionales':
+        return <ActividadesInstitucionales currentUser={user} />;
+      /* Desactivados
       case 'usuarios':
         return <Usuarios />;
       case 'sedes':
         return <Sedes />;
+      */
       default:
         return (
           <div className="glass animate-fade" style={{ padding: '40px', minHeight: '60vh', textAlign: 'center' }}>

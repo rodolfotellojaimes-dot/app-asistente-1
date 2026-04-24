@@ -15,11 +15,92 @@ import {
     CheckCircle,
     XCircle,
     Eye,
-    ArrowLeft
+    ArrowLeft,
+    FileDown
 } from 'lucide-react';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import logo from '../assets/logo.png';
 import { supabase } from '../lib/supabase';
 
 const Incidencias = ({ currentUser }) => {
+    const exportToPDF = () => {
+        if (!selectedIncidencia) return;
+        
+        const doc = new jsPDF('p', 'mm', 'a4');
+        
+        // --- BRANDED HEADER ---
+        try {
+            doc.addImage(logo, 'PNG', 14, 10, 20, 20);
+        } catch (e) {
+            console.error("Logo error:", e);
+        }
+        
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(20);
+        doc.setTextColor(45, 90, 150);
+        doc.text('ASISTENTE DOCENTE DIGITAL', 40, 18);
+        
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(100);
+        doc.text('IEI Pedro Sánchez Gavidia - Huánuco', 40, 24);
+        
+        doc.setDrawColor(200);
+        doc.line(14, 32, 196, 32);
+        // ----------------------
+
+        doc.setFontSize(16);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(0);
+        doc.text('ACTA DE REGISTRO DE INCIDENCIA', 105, 45, { align: 'center' });
+        
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(100);
+        doc.text(`Expediente Nro: ${selectedIncidencia.id}`, 105, 52, { align: 'center' });
+
+        // Table for details
+        autoTable(doc, {
+            startY: 60,
+            body: [
+                ['ESTUDIANTE:', selectedIncidencia.alumnoNombre],
+                ['GRADO Y SECCIÓN:', `${selectedIncidencia.grado}° "${selectedIncidencia.seccion}"`],
+                ['TIPO DE INCIDENCIA:', selectedIncidencia.tipo],
+                ['FECHA Y HORA:', `${selectedIncidencia.fecha} - ${selectedIncidencia.hora}`],
+                ['REGISTRADO POR:', selectedIncidencia.registradoPor]
+            ],
+            theme: 'plain',
+            styles: { fontSize: 11, cellPadding: 4 },
+            columnStyles: { 0: { fontStyle: 'bold', width: 50 } }
+        });
+
+        const finalY = doc.lastAutoTable.finalY + 10;
+
+        doc.setFont('helvetica', 'bold');
+        doc.text('DESCRIPCIÓN DE LOS HECHOS:', 14, finalY);
+        doc.setFont('helvetica', 'normal');
+        const descLines = doc.splitTextToSize(selectedIncidencia.descripcion, 180);
+        doc.text(descLines, 14, finalY + 7);
+        
+        const nextY = finalY + (descLines.length * 7) + 15;
+
+        doc.setFont('helvetica', 'bold');
+        doc.text('COMPROMISOS ASUMIDOS:', 14, nextY);
+        doc.setFont('helvetica', 'normal');
+        const compLines = doc.splitTextToSize(selectedIncidencia.compromisos || 'No se registraron compromisos específicos.', 180);
+        doc.text(compLines, 14, nextY + 7);
+
+        // Signatures
+        const signY = 250;
+        doc.line(30, signY, 90, signY);
+        doc.text('Firma del Docente', 60, signY + 5, { align: 'center' });
+        
+        doc.line(120, signY, 180, signY);
+        doc.text('V° B° Dirección', 150, signY + 5, { align: 'center' });
+
+        doc.save(`Incidencia_${selectedIncidencia.alumnoNombre.replace(/ /g, '_')}_${selectedIncidencia.fecha}.pdf`);
+    };
     const [view, setView] = useState('summary'); // summary, register, detail
     const [incidencias, setIncidencias] = useState([]);
     const [alumnos, setAlumnos] = useState([]);
@@ -452,6 +533,9 @@ const Incidencias = ({ currentUser }) => {
                             </div>
 
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '40px' }}>
+                                <button onClick={exportToPDF} className="btn" style={{ width: '100%', background: 'rgba(96,165,250,0.1)', color: '#60a5fa' }}>
+                                    <FileDown size={18} /> Exportar PDF
+                                </button>
                                 <button onClick={() => window.print()} className="btn btn-primary" style={{ width: '100%' }}>
                                     <Printer size={18} /> Imprimir Acta
                                 </button>

@@ -16,11 +16,94 @@ import {
     Info,
     Eye,
     ArrowLeft,
-    Handshake
+    Handshake,
+    FileDown
 } from 'lucide-react';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import logo from '../assets/logo.png';
 import { supabase } from '../lib/supabase';
 
 const AtencionPadres = ({ currentUser }) => {
+    const exportToPDF = () => {
+        if (!selectedAtencion) return;
+        
+        const doc = new jsPDF('p', 'mm', 'a4');
+        
+        // --- BRANDED HEADER ---
+        try {
+            doc.addImage(logo, 'PNG', 14, 10, 20, 20);
+        } catch (e) {
+            console.error("Logo error:", e);
+        }
+        
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(20);
+        doc.setTextColor(45, 90, 80);
+        doc.text('ASISTENTE DOCENTE DIGITAL', 40, 18);
+        
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(100);
+        doc.text('IEI Pedro Sánchez Gavidia - Huánuco', 40, 24);
+        
+        doc.setDrawColor(200);
+        doc.line(14, 32, 196, 32);
+        // ----------------------
+
+        doc.setFontSize(16);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(0);
+        doc.text('ACTA DE ATENCIÓN A PADRES', 105, 45, { align: 'center' });
+        
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(100);
+        doc.text(`ID Registro: ${selectedAtencion.id.substring(0, 8).toUpperCase()}`, 105, 52, { align: 'center' });
+
+        // Table for details
+        autoTable(doc, {
+            startY: 60,
+            body: [
+                ['ESTUDIANTE:', selectedAtencion.alumnoNombre],
+                ['GRADO Y SECCIÓN:', `${selectedAtencion.grado}° "${selectedAtencion.seccion}"`],
+                ['PADRE/APODERADO:', selectedAtencion.parentName],
+                ['DNI PADRE:', selectedAtencion.parentDni || '---'],
+                ['MOTIVO:', selectedAtencion.motivo],
+                ['FECHA Y HORA:', `${selectedAtencion.fecha} - ${selectedAtencion.hora}`],
+                ['REGISTRADO POR:', selectedAtencion.registradoPor]
+            ],
+            theme: 'plain',
+            styles: { fontSize: 11, cellPadding: 3 },
+            columnStyles: { 0: { fontStyle: 'bold', width: 50 } }
+        });
+
+        const finalY = doc.lastAutoTable.finalY + 10;
+
+        doc.setFont('helvetica', 'bold');
+        doc.text('DESCRIPCIÓN DE LA ENTREVISTA:', 14, finalY);
+        doc.setFont('helvetica', 'normal');
+        const descLines = doc.splitTextToSize(selectedAtencion.descripcion || 'Sin descripción detallada.', 180);
+        doc.text(descLines, 14, finalY + 7);
+        
+        const nextY = finalY + (descLines.length * 7) + 15;
+
+        doc.setFont('helvetica', 'bold');
+        doc.text('ACUERDOS Y COMPROMISOS:', 14, nextY);
+        doc.setFont('helvetica', 'normal');
+        const compLines = doc.splitTextToSize(selectedAtencion.acuerdos || 'No se registraron acuerdos específicos.', 180);
+        doc.text(compLines, 14, nextY + 7);
+
+        // Signatures
+        const signY = 260;
+        doc.line(30, signY, 80, signY);
+        doc.text('Firma del Padre / Apoderado', 55, signY + 5, { align: 'center' });
+        
+        doc.line(130, signY, 180, signY);
+        doc.text('Firma del Docente', 155, signY + 5, { align: 'center' });
+
+        doc.save(`Atencion_${selectedAtencion.alumnoNombre.replace(/ /g, '_')}.pdf`);
+    };
     const [view, setView] = useState('summary'); // summary, register, detail
     const [atenciones, setAtenciones] = useState([]);
     const [alumnos, setAlumnos] = useState([]);
@@ -476,6 +559,9 @@ const AtencionPadres = ({ currentUser }) => {
                             </div>
 
                             <div className="no-print" style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '40px' }}>
+                                <button onClick={exportToPDF} className="btn" style={{ width: '100%', background: 'rgba(96,165,250,0.1)', color: '#60a5fa' }}>
+                                    <FileDown size={18} /> Exportar PDF
+                                </button>
                                 <button onClick={() => window.print()} className="btn btn-primary" style={{ width: '100%' }}>
                                     <Printer size={18} /> Imprimir Acta
                                 </button>

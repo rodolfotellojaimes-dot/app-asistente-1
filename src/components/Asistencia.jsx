@@ -32,7 +32,7 @@ const Asistencia = () => {
         'Matemática', 'Comunicación', 'Inglés', 'Arte y Cultura',
         'Ciencias Sociales', 'Desarrollo Personal, Ciudadanía y Cívica (DPCC)',
         'Educación Física', 'Educación Religiosa', 'Ciencia y Tecnología',
-        'Educación para el Trabajo'
+        'Educación para el Trabajo', 'Tutoría', 'Registro Auxiliar'
     ];
 
     const meses = [
