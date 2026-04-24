@@ -110,11 +110,11 @@ function App() {
 
   return (
     <div className="app-container" style={{ paddingBottom: '40px' }}>
-      <nav className="glass" style={{ margin: '20px', padding: '10px 30px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: '20px', zIndex: 100 }}>
+      <nav className="glass nav-mobile-padding" style={{ margin: '20px', padding: '10px 30px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: '20px', zIndex: 100 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
           <div onClick={() => setActiveModule('dashboard')} style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}>
-            <img src={logo} alt="Logo" style={{ width: '40px', height: '40px', objectFit: 'contain' }} />
-            <h2 className="text-gradient" style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>
+            <img src={logo} alt="Logo" className="logo-mobile" style={{ width: '40px', height: '40px', objectFit: 'contain' }} />
+            <h2 className="text-gradient hide-mobile" style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>
               ASISTENTE DOCENTE
             </h2>
           </div>
@@ -125,7 +125,7 @@ function App() {
           )}
         </div>
         <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
-          <div style={{ textAlign: 'right' }}>
+          <div className="hide-mobile" style={{ textAlign: 'right' }}>
             <div style={{ fontSize: '0.9rem', fontWeight: '600' }}>{user.email}</div>
             <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Docente</div>
           </div>

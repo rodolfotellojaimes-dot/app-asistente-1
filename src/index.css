@@ -185,3 +185,24 @@ body {
   transform: translateY(-12px) scale(1.02);
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
 }
+
+/* Responsive Utilities */
+@media (max-width: 768px) {
+  .hide-mobile {
+    display: none !important;
+  }
+  
+  .nav-mobile-padding {
+    padding: 10px 15px !important;
+    margin: 10px !important;
+  }
+
+  .logo-mobile {
+    width: 32px !important;
+    height: 32px !important;
+  }
+
+  .text-gradient {
+    font-size: 1rem !important;
+  }
+}
