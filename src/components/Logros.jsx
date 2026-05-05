@@ -23,6 +23,7 @@ const Logros = () => {
 
     // Panel 2: Informe Filters
     const [filterBimestre, setFilterBimestre] = useState(1);
+    const [informeRetos, setInformeRetos] = useState({});
 
     // Data State
     const [alumnos, setAlumnos] = useState([]);
@@ -127,6 +128,7 @@ const Logros = () => {
         setIsConsulted(false);
         setAlumnos([]);
         setLogrosData({});
+        setInformeRetos({});
 
         try {
             const { data: alumnosData, error: errAlumnos } = await supabase
@@ -151,19 +153,26 @@ const Logros = () => {
                 // Since 'achievements' doesn't seem to have a date for all, we fetch by area
                 const { data: logData, error: errLog } = await supabase
                     .from('achievements')
-                    .select('student_id, period, level')
+                    .select('student_id, period, level, descripcion_reto')
                     .in('student_id', idsAlumnos)
                     .eq('area', filterArea);
 
                 if (errLog) throw errLog;
 
                 const matriz = {};
+                const retosMap = {};
                 logData.forEach(reg => {
                     const sNum = parseInt(reg.period.replace('S', ''));
                     if (!matriz[reg.student_id]) matriz[reg.student_id] = {};
-                    if (!isNaN(sNum)) matriz[reg.student_id][sNum] = reg.level;
+                    if (!isNaN(sNum)) {
+                        matriz[reg.student_id][sNum] = reg.level;
+                        if (reg.descripcion_reto && !retosMap[sNum]) {
+                            retosMap[sNum] = reg.descripcion_reto;
+                        }
+                    }
                 });
                 setLogrosData(matriz);
+                setInformeRetos(retosMap);
             }
             setIsConsulted(true);
         } catch (error) {
@@ -249,14 +258,32 @@ const Logros = () => {
 
         const legend = [
             [],
-            ["LEYENDA:"],
+            ["LEYENDA DE NIVELES:"],
             ["L", "Logrado"],
             ["P", "Proceso"],
             ["I", "Inicio"],
             ["AD", "Destacado"]
         ];
 
-        const finalContent = [...headerInfo, tableHeaders, ...studentData, ...legend];
+        let finalContent = [...headerInfo, tableHeaders, ...studentData, ...legend];
+
+        if (!isSesion) {
+            const currentBimestre = bimestres.find(b => b.id === filterBimestre);
+            const columnasSesiones = Array.from({ length: 15 }, (_, i) => currentBimestre.start + i);
+            const retosDescs = [
+                [],
+                ["DESCRIPCIÓN DE RETOS (SESIONES):"]
+            ];
+            columnasSesiones.forEach(s => {
+                if (informeRetos[s]) {
+                    retosDescs.push([`S${s}`, informeRetos[s]]);
+                }
+            });
+            if (retosDescs.length > 2) {
+                finalContent = [...finalContent, ...retosDescs];
+            }
+        }
+
         const ws = XLSX.utils.aoa_to_sheet(finalContent);
         ws['!cols'] = [{ wch: 4 }, { wch: 45 }, ...Array.from({ length: 15 }, () => ({ wch: 5 }))];
 
@@ -344,6 +371,29 @@ const Logros = () => {
                 }
             }
         });
+
+        if (!isSesion) {
+            const finalY = doc.lastAutoTable.finalY || 48;
+            const currentBimestre = bimestres.find(b => b.id === filterBimestre);
+            const columnasSesiones = Array.from({ length: 15 }, (_, i) => currentBimestre.start + i);
+            
+            const retosBody = [];
+            columnasSesiones.forEach(s => {
+                if (informeRetos[s]) retosBody.push([`S${s}`, informeRetos[s]]);
+            });
+
+            if (retosBody.length > 0) {
+                autoTable(doc, {
+                    startY: finalY + 10,
+                    head: [['Sesión', 'Descripción del Reto']],
+                    body: retosBody,
+                    theme: 'grid',
+                    styles: { fontSize: 8 },
+                    headStyles: { fillColor: [45, 90, 80], textColor: 255 },
+                    columnStyles: { 0: { cellWidth: 15, halign: 'center', fontStyle: 'bold' } }
+                });
+            }
+        }
 
         doc.save(`Logros_${isSesion ? 'S' + filterSesionNum : 'Bimestre' + filterBimestre}.pdf`);
     };
@@ -515,6 +565,7 @@ const Logros = () => {
             {activeTab === 'informe' && isConsulted && (() => {
                 const currentBimestre = bimestres.find(b => b.id === filterBimestre);
                 const columnasSesiones = Array.from({ length: 15 }, (_, i) => currentBimestre.start + i);
+                const retosDeEsteBimestre = columnasSesiones.filter(s => informeRetos[s]);
                 return (
                 <div className="glass animate-fade" style={{ padding: '0', overflow: 'hidden' }}>
                     <div style={{ overflowX: 'auto' }}>
@@ -552,6 +603,18 @@ const Logros = () => {
                             </tbody>
                         </table>
                     </div>
+                    {retosDeEsteBimestre.length > 0 && (
+                        <div style={{ padding: '20px', borderTop: '1px solid var(--glass-border)', background: 'rgba(255,255,255,0.02)' }}>
+                            <h4 style={{ color: '#4ade80', marginBottom: '10px' }}>Descripción de Retos</h4>
+                            <ul style={{ listStyleType: 'none', fontSize: '0.85rem' }}>
+                                {retosDeEsteBimestre.map(s => (
+                                    <li key={s} style={{ marginBottom: '5px' }}>
+                                        <strong style={{ color: 'var(--text-primary)' }}>S{s}:</strong> {informeRetos[s]}
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
                 </div>
                 );
             })()}
