@@ -603,9 +603,9 @@ const Logros = () => {
                             </tbody>
                         </table>
                     </div>
-                    {retosDeEsteBimestre.length > 0 && (
-                        <div style={{ padding: '20px', borderTop: '1px solid var(--glass-border)', background: 'rgba(255,255,255,0.02)' }}>
-                            <h4 style={{ color: '#4ade80', marginBottom: '10px' }}>Descripción de Retos</h4>
+                    <div style={{ padding: '20px', borderTop: '1px solid var(--glass-border)', background: 'rgba(255,255,255,0.02)' }}>
+                        <h4 style={{ color: '#4ade80', marginBottom: '10px' }}>Descripción de Retos</h4>
+                        {retosDeEsteBimestre.length > 0 ? (
                             <ul style={{ listStyleType: 'none', fontSize: '0.85rem' }}>
                                 {retosDeEsteBimestre.map(s => (
                                     <li key={s} style={{ marginBottom: '5px' }}>
@@ -613,8 +613,12 @@ const Logros = () => {
                                     </li>
                                 ))}
                             </ul>
-                        </div>
-                    )}
+                        ) : (
+                            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontStyle: 'italic' }}>
+                                No se ha registrado ninguna descripción de reto en las sesiones de este bimestre.
+                            </p>
+                        )}
+                    </div>
                 </div>
                 );
             })()}
