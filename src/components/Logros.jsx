@@ -275,13 +275,9 @@ const Logros = () => {
                 ["DESCRIPCIÓN DE RETOS (SESIONES):"]
             ];
             columnasSesiones.forEach(s => {
-                if (informeRetos[s]) {
-                    retosDescs.push([`S${s}`, informeRetos[s]]);
-                }
+                retosDescs.push([`S${s}`, informeRetos[s] || "Sin descripción registrada"]);
             });
-            if (retosDescs.length > 2) {
-                finalContent = [...finalContent, ...retosDescs];
-            }
+            finalContent = [...finalContent, ...retosDescs];
         }
 
         const ws = XLSX.utils.aoa_to_sheet(finalContent);
@@ -379,20 +375,18 @@ const Logros = () => {
             
             const retosBody = [];
             columnasSesiones.forEach(s => {
-                if (informeRetos[s]) retosBody.push([`S${s}`, informeRetos[s]]);
+                retosBody.push([`S${s}`, informeRetos[s] || "Sin descripción registrada"]);
             });
 
-            if (retosBody.length > 0) {
-                autoTable(doc, {
-                    startY: finalY + 10,
-                    head: [['Sesión', 'Descripción del Reto']],
-                    body: retosBody,
-                    theme: 'grid',
-                    styles: { fontSize: 8 },
-                    headStyles: { fillColor: [45, 90, 80], textColor: 255 },
-                    columnStyles: { 0: { cellWidth: 15, halign: 'center', fontStyle: 'bold' } }
-                });
-            }
+            autoTable(doc, {
+                startY: finalY + 10,
+                head: [['Sesión', 'Descripción del Reto']],
+                body: retosBody,
+                theme: 'grid',
+                styles: { fontSize: 8 },
+                headStyles: { fillColor: [45, 90, 80], textColor: 255 },
+                columnStyles: { 0: { cellWidth: 15, halign: 'center', fontStyle: 'bold' } }
+            });
         }
 
         doc.save(`Logros_${isSesion ? 'S' + filterSesionNum : 'Bimestre' + filterBimestre}.pdf`);
@@ -565,7 +559,6 @@ const Logros = () => {
             {activeTab === 'informe' && isConsulted && (() => {
                 const currentBimestre = bimestres.find(b => b.id === filterBimestre);
                 const columnasSesiones = Array.from({ length: 15 }, (_, i) => currentBimestre.start + i);
-                const retosDeEsteBimestre = columnasSesiones.filter(s => informeRetos[s]);
                 return (
                 <div className="glass animate-fade" style={{ padding: '0', overflow: 'hidden' }}>
                     <div style={{ overflowX: 'auto' }}>
@@ -605,19 +598,13 @@ const Logros = () => {
                     </div>
                     <div style={{ padding: '20px', borderTop: '1px solid var(--glass-border)', background: 'rgba(255,255,255,0.02)' }}>
                         <h4 style={{ color: '#4ade80', marginBottom: '10px' }}>Descripción de Retos</h4>
-                        {retosDeEsteBimestre.length > 0 ? (
-                            <ul style={{ listStyleType: 'none', fontSize: '0.85rem' }}>
-                                {retosDeEsteBimestre.map(s => (
-                                    <li key={s} style={{ marginBottom: '5px' }}>
-                                        <strong style={{ color: 'var(--text-primary)' }}>S{s}:</strong> {informeRetos[s]}
-                                    </li>
-                                ))}
-                            </ul>
-                        ) : (
-                            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontStyle: 'italic' }}>
-                                No se ha registrado ninguna descripción de reto en las sesiones de este bimestre.
-                            </p>
-                        )}
+                        <ul style={{ listStyleType: 'none', fontSize: '0.85rem' }}>
+                            {columnasSesiones.map(s => (
+                                <li key={s} style={{ marginBottom: '5px' }}>
+                                    <strong style={{ color: 'var(--text-primary)' }}>S{s}:</strong> {informeRetos[s] || <span style={{ color: 'var(--text-secondary)', fontStyle: 'italic' }}>Sin descripción registrada</span>}
+                                </li>
+                            ))}
+                        </ul>
                     </div>
                 </div>
                 );
