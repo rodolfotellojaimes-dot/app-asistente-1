@@ -45,3 +45,14 @@ ALTER TABLE actividades_institucionales ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Permitir todo a usuarios autenticados" ON trabajo_colegiado FOR ALL USING (true);
 CREATE POLICY "Permitir todo a usuarios autenticados" ON reuniones_docentes FOR ALL USING (true);
 CREATE POLICY "Permitir todo a usuarios autenticados" ON actividades_institucionales FOR ALL USING (true);
+
+-- Agregar columna requerida 'date' en la tabla 'achievements' si no existe
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='achievements' AND column_name='date') THEN
+        ALTER TABLE achievements ADD COLUMN date DATE DEFAULT CURRENT_DATE;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='achievements' AND column_name='descripcion_reto') THEN
+        ALTER TABLE achievements ADD COLUMN descripcion_reto TEXT;
+    END IF;
+END $$;

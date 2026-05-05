@@ -19,9 +19,10 @@ const Logros = () => {
     // Panel 1: Registro por Sesión
     const [filterSesionNum, setFilterSesionNum] = useState(1);
     const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+    const [retoDescription, setRetoDescription] = useState('');
 
     // Panel 2: Informe Filters
-    const [filterMes, setFilterMes] = useState(new Date().getMonth());
+    const [filterBimestre, setFilterBimestre] = useState(1);
 
     // Data State
     const [alumnos, setAlumnos] = useState([]);
@@ -37,9 +38,11 @@ const Logros = () => {
         'Educación para el Trabajo', 'Tutoría', 'Registro Auxiliar'
     ];
 
-    const meses = [
-        'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-        'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+    const bimestres = [
+        { id: 1, label: 'I Bimestre (S1 - S15)', start: 1, end: 15 },
+        { id: 2, label: 'II Bimestre (S16 - S30)', start: 16, end: 30 },
+        { id: 3, label: 'III Bimestre (S31 - S45)', start: 31, end: 45 },
+        { id: 4, label: 'IV Bimestre (S46 - S60)', start: 46, end: 60 }
     ];
 
     const niveles = [
@@ -49,7 +52,7 @@ const Logros = () => {
         { label: 'AD', value: 'Destacado', color: '#60a5fa', bg: 'rgba(96, 165, 250, 0.1)' }
     ];
 
-    const sesionesArray = Array.from({ length: 40 }, (_, i) => i + 1);
+    const sesionesArray = Array.from({ length: 60 }, (_, i) => i + 1);
 
     const handleConsultarSesion = async () => {
         if (!filterGrado || !filterSeccion || !filterArea || !filterSesionNum) {
@@ -83,7 +86,7 @@ const Logros = () => {
             if (idsAlumnos.length > 0) {
                 const { data: logData, error: errLog } = await supabase
                     .from('achievements')
-                    .select('student_id, level')
+                    .select('student_id, level, date, descripcion_reto')
                     .in('student_id', idsAlumnos)
                     .eq('area', filterArea)
                     .eq('period', `S${filterSesionNum}`);
@@ -91,6 +94,15 @@ const Logros = () => {
                 if (errLog) throw errLog;
 
                 const dailyMap = {};
+                if (logData.length > 0) {
+                    const first = logData.find(r => r.date || r.descripcion_reto) || logData[0];
+                    if (first.date) setSelectedDate(first.date);
+                    setRetoDescription(first.descripcion_reto || '');
+                } else {
+                    setSelectedDate(new Date().toISOString().split('T')[0]);
+                    setRetoDescription('');
+                }
+
                 logData.forEach(reg => {
                     dailyMap[reg.student_id] = reg.level;
                 });
@@ -171,7 +183,8 @@ const Logros = () => {
                 level: logrosSesion[alumno.id] || 'I',
                 area: filterArea,
                 competencia: 'General',
-                date: selectedDate
+                date: selectedDate,
+                descripcion_reto: retoDescription
             }));
 
             if (upsertData.length > 0) {
@@ -209,9 +222,9 @@ const Logros = () => {
             ["ASISTENTE DOCENTE - AVANCES DE LOGRO"],
             ["IEI PEDRO SÁNCHEZ GAVIDIA - HUÁNUCO"],
             [],
-            [isSesion ? `REPORTE DE SESIÓN ${filterSesionNum} - FECHA: ${selectedDate}` : `INFORME MENSUAL DE AVANCES - MES: ${meses[filterMes].toUpperCase()}`],
+            [isSesion ? `REPORTE DE SESIÓN ${filterSesionNum} - FECHA: ${selectedDate}` : `INFORME DE AVANCES - ${bimestres.find(b => b.id === filterBimestre).label.toUpperCase()}`],
             ["GRADO:", `${filterGrado}°`, "SECCIÓN:", filterSeccion, "ÁREA:", filterArea],
-            []
+            ...(isSesion && retoDescription ? [["RETO:", retoDescription], []] : [[]])
         ];
 
         let tableHeaders, studentData;
@@ -224,11 +237,13 @@ const Logros = () => {
                 logrosSesion[a.id] || ''
             ]);
         } else {
-            tableHeaders = ["N°", "APELLIDOS Y NOMBRES", ...Array.from({ length: 15 }, (_, i) => `S${i + 1}`)];
+            const currentBimestre = bimestres.find(b => b.id === filterBimestre);
+            const columnasSesiones = Array.from({ length: 15 }, (_, i) => currentBimestre.start + i);
+            tableHeaders = ["N°", "APELLIDOS Y NOMBRES", ...columnasSesiones.map(s => `S${s}`)];
             studentData = alumnos.map((a, idx) => [
                 idx + 1,
                 `${a.apellidos}, ${a.nombres}`,
-                ...Array.from({ length: 15 }, (_, i) => logrosData[a.id]?.[i + 1] || '')
+                ...columnasSesiones.map(s => logrosData[a.id]?.[s] || '')
             ]);
         }
 
@@ -247,7 +262,7 @@ const Logros = () => {
 
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Logros");
-        XLSX.writeFile(wb, `Logros_${isSesion ? 'S' + filterSesionNum : meses[filterMes]}.xlsx`);
+        XLSX.writeFile(wb, `Logros_${isSesion ? 'S' + filterSesionNum : 'Bimestre' + filterBimestre}.xlsx`);
     };
 
     const exportToPDF = () => {
@@ -273,7 +288,7 @@ const Logros = () => {
         
         const title = isSesion 
             ? `REPORTE DE SESIÓN ${filterSesionNum} - ${selectedDate}`
-            : `INFORME DE AVANCES DE LOGRO - ${meses[filterMes].toUpperCase()} (${new Date().getFullYear()})`;
+            : `INFORME DE AVANCES DE LOGRO - ${bimestres.find(b => b.id === filterBimestre).label.toUpperCase()} (${new Date().getFullYear()})`;
         
         doc.setFontSize(12);
         doc.setFont('helvetica', 'bold');
@@ -285,6 +300,14 @@ const Logros = () => {
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(100);
         doc.text(subtitle, 14, 42);
+
+        let startY = 48;
+        if (isSesion && retoDescription) {
+            doc.setFont('helvetica', 'italic');
+            doc.setTextColor(60);
+            doc.text(`Reto: ${retoDescription}`, 14, 48);
+            startY = 54;
+        }
         // ----------------------
 
         let headers, data;
@@ -293,16 +316,18 @@ const Logros = () => {
             headers = [['N°', 'Estudiante', 'Nivel de Logro']];
             data = alumnos.map((a, idx) => [idx + 1, `${a.apellidos}, ${a.nombres}`, logrosSesion[a.id] || '']);
         } else {
-            headers = [['N°', 'Estudiante', ...Array.from({ length: 15 }, (_, i) => `S${i + 1}`)]];
+            const currentBimestre = bimestres.find(b => b.id === filterBimestre);
+            const columnasSesiones = Array.from({ length: 15 }, (_, i) => currentBimestre.start + i);
+            headers = [['N°', 'Estudiante', ...columnasSesiones.map(s => `S${s}`)]];
             data = alumnos.map((a, idx) => [
                 idx + 1, 
                 `${a.apellidos}, ${a.nombres}`,
-                ...Array.from({ length: 15 }, (_, i) => logrosData[a.id]?.[i + 1] || '')
+                ...columnasSesiones.map(s => logrosData[a.id]?.[s] || '')
             ]);
         }
 
         autoTable(doc, {
-            startY: 48,
+            startY: startY,
             head: headers,
             body: data,
             theme: 'grid',
@@ -320,7 +345,7 @@ const Logros = () => {
             }
         });
 
-        doc.save(`Logros_${isSesion ? 'S' + filterSesionNum : meses[filterMes]}.pdf`);
+        doc.save(`Logros_${isSesion ? 'S' + filterSesionNum : 'Bimestre' + filterBimestre}.pdf`);
     };
 
     return (
@@ -358,7 +383,7 @@ const Logros = () => {
             {/* Filter Section */}
             <div className="glass" style={{ padding: '25px', marginBottom: '20px' }}>
                 <h2 style={{ fontSize: '1.2rem', marginBottom: '20px', color: '#4ade80', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <TrendingUp size={24} /> {activeTab === 'sesion' ? 'Registro Logro por Sesión' : 'Resumen Mensual de Avances'}
+                    <TrendingUp size={24} /> {activeTab === 'sesion' ? 'Registro Logro por Sesión' : 'Resumen Bimestral de Avances'}
                 </h2>
                 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '15px', alignItems: 'end' }}>
@@ -396,12 +421,16 @@ const Logros = () => {
                                 <label>Fecha</label>
                                 <input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} style={{ colorScheme: 'dark' }} />
                             </div>
+                            <div className="input-group" style={{ marginBottom: 0, gridColumn: '1 / -1' }}>
+                                <label>Descripción corta del Reto</label>
+                                <input type="text" placeholder="Ej: Resolver problemas con fracciones..." value={retoDescription} onChange={(e) => setRetoDescription(e.target.value)} />
+                            </div>
                         </>
                     ) : (
                         <div className="input-group" style={{ marginBottom: 0 }}>
-                            <label>Mes Informe</label>
-                            <select value={filterMes} onChange={(e) => setFilterMes(parseInt(e.target.value))}>
-                                {meses.map((m, idx) => <option key={m} value={idx}>{m}</option>)}
+                            <label>Bimestre</label>
+                            <select value={filterBimestre} onChange={(e) => setFilterBimestre(parseInt(e.target.value))}>
+                                {bimestres.map(b => <option key={b.id} value={b.id}>{b.label}</option>)}
                             </select>
                         </div>
                     )}
@@ -483,14 +512,17 @@ const Logros = () => {
             )}
 
             {/* Panel 2: Informe View */}
-            {activeTab === 'informe' && isConsulted && (
+            {activeTab === 'informe' && isConsulted && (() => {
+                const currentBimestre = bimestres.find(b => b.id === filterBimestre);
+                const columnasSesiones = Array.from({ length: 15 }, (_, i) => currentBimestre.start + i);
+                return (
                 <div className="glass animate-fade" style={{ padding: '0', overflow: 'hidden' }}>
                     <div style={{ overflowX: 'auto' }}>
                         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem' }}>
                             <thead>
                                 <tr style={{ background: '#2d5a50', color: 'white' }}>
                                     <th style={{ padding: '12px', textAlign: 'left', position: 'sticky', left: 0, background: '#1a332e' }}>Estudiante</th>
-                                    {Array.from({ length: 15 }, (_, i) => i + 1).map(s => (
+                                    {columnasSesiones.map(s => (
                                         <th key={s} style={{ padding: '10px', textAlign: 'center' }}>S{s}</th>
                                     ))}
                                 </tr>
@@ -501,7 +533,7 @@ const Logros = () => {
                                         <td style={{ padding: '10px', position: 'sticky', left: 0, background: 'var(--card-bg)' }}>
                                             {a.apellidos}, {a.nombres}
                                         </td>
-                                        {Array.from({ length: 15 }, (_, i) => i + 1).map(s => {
+                                        {columnasSesiones.map(s => {
                                             const val = logrosData[a.id]?.[s] || '';
                                             const n = niveles.find(x => x.label === val);
                                             return (
@@ -521,7 +553,8 @@ const Logros = () => {
                         </table>
                     </div>
                 </div>
-            )}
+                );
+            })()}
 
             {isConsulted && alumnos.length === 0 && (
                 <div style={{ padding: '60px', textAlign: 'center', opacity: 0.5 }}>
