@@ -236,6 +236,13 @@ const Logros = () => {
         });
     };
 
+    const handleUpdateInformeReto = (sessionNum, value) => {
+        setInformeRetos(prev => ({
+            ...prev,
+            [sessionNum]: value
+        }));
+    };
+
     const handleSaveInforme = async () => {
         setLoading(true);
         try {
@@ -252,7 +259,8 @@ const Logros = () => {
                             period: `S${s}`,
                             level: level,
                             area: filterArea,
-                            competencia: 'General'
+                            competencia: 'General',
+                            descripcion_reto: informeRetos[s] || ''
                         });
                     }
                 });
@@ -676,8 +684,15 @@ const Logros = () => {
                         <h4 style={{ color: '#4ade80', marginBottom: '10px' }}>Descripción de Retos</h4>
                         <ul style={{ listStyleType: 'none', fontSize: '0.85rem' }}>
                             {columnasSesiones.map(s => (
-                                <li key={s} style={{ marginBottom: '5px' }}>
-                                    <strong style={{ color: 'var(--text-primary)' }}>S{s}:</strong> {informeRetos[s] || <span style={{ color: 'var(--text-secondary)', fontStyle: 'italic' }}>Sin descripción registrada</span>}
+                                <li key={s} style={{ marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                    <strong style={{ color: 'var(--text-primary)', minWidth: '40px' }}>S{s}:</strong>
+                                    <input 
+                                        type="text" 
+                                        value={informeRetos[s] || ''} 
+                                        onChange={(e) => handleUpdateInformeReto(s, e.target.value)}
+                                        placeholder="Sin descripción registrada"
+                                        style={{ flex: 1, padding: '8px', borderRadius: '5px', border: '1px solid var(--glass-border)', background: 'rgba(0,0,0,0.2)', color: 'white' }}
+                                    />
                                 </li>
                             ))}
                         </ul>
