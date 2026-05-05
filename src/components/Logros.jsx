@@ -216,6 +216,66 @@ const Logros = () => {
         setLogrosSesion(prev => ({ ...prev, [alumnoId]: level }));
     };
 
+    const handleUpdateInformeLevel = (alumnoId, sessionNum) => {
+        setLogrosData(prev => {
+            const currentLevel = prev[alumnoId]?.[sessionNum] || '';
+            let nextLevel = '';
+            if (currentLevel === '') nextLevel = 'I';
+            else if (currentLevel === 'I') nextLevel = 'P';
+            else if (currentLevel === 'P') nextLevel = 'L';
+            else if (currentLevel === 'L') nextLevel = 'AD';
+            else if (currentLevel === 'AD') nextLevel = '';
+
+            return {
+                ...prev,
+                [alumnoId]: {
+                    ...(prev[alumnoId] || {}),
+                    [sessionNum]: nextLevel
+                }
+            };
+        });
+    };
+
+    const handleSaveInforme = async () => {
+        setLoading(true);
+        try {
+            const currentBimestre = bimestres.find(b => b.id === filterBimestre);
+            const columnasSesiones = Array.from({ length: 15 }, (_, i) => currentBimestre.start + i);
+            
+            const upsertData = [];
+            alumnos.forEach(alumno => {
+                columnasSesiones.forEach(s => {
+                    const level = logrosData[alumno.id]?.[s];
+                    if (level) {
+                        upsertData.push({
+                            student_id: alumno.id,
+                            period: `S${s}`,
+                            level: level,
+                            area: filterArea,
+                            competencia: 'General'
+                        });
+                    }
+                });
+            });
+
+            if (upsertData.length > 0) {
+                const { error } = await supabase
+                    .from('achievements')
+                    .upsert(upsertData, { onConflict: 'student_id, period, area' });
+
+                if (error) throw error;
+                alert(`Avances del bimestre guardados exitosamente.`);
+            } else {
+                 alert('No hay avances válidos para guardar.');
+            }
+        } catch (error) {
+            console.error("Error guardando informe:", error);
+            alert("Error al guardar: " + error.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const setAllSesionValue = (val) => {
         const newData = {};
         alumnos.forEach(a => {
@@ -561,6 +621,18 @@ const Logros = () => {
                 const columnasSesiones = Array.from({ length: 15 }, (_, i) => currentBimestre.start + i);
                 return (
                 <div className="glass animate-fade" style={{ padding: '0', overflow: 'hidden' }}>
+                    <div style={{ padding: '20px', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div>
+                            <span>Edición y Resumen para el </span>
+                            <strong>{currentBimestre.label}</strong>
+                            <span style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Haz clic en cada celda para alternar el nivel (I → P → L → AD → Borrar)</span>
+                        </div>
+                        <div style={{ display: 'flex', gap: '10px' }}>
+                            <button onClick={handleSaveInforme} className="btn" style={{ background: '#2d5a50', color: 'white' }}>
+                                <Save size={16} /> Guardar Todos los Cambios
+                            </button>
+                        </div>
+                    </div>
                     <div style={{ overflowX: 'auto' }}>
                         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem' }}>
                             <thead>
@@ -581,11 +653,15 @@ const Logros = () => {
                                             const val = logrosData[a.id]?.[s] || '';
                                             const n = niveles.find(x => x.label === val);
                                             return (
-                                                <td key={s} style={{ 
+                                                <td key={s} 
+                                                    onClick={() => handleUpdateInformeLevel(a.id, s)}
+                                                    style={{ 
                                                     textAlign: 'center', 
                                                     color: n ? n.color : 'inherit',
                                                     fontWeight: 'bold',
-                                                    background: n ? n.bg : 'transparent'
+                                                    background: n ? n.bg : 'transparent',
+                                                    cursor: 'pointer',
+                                                    userSelect: 'none'
                                                 }}>
                                                     {val}
                                                 </td>
