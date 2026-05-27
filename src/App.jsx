@@ -10,9 +10,10 @@ import AtencionPadres from './components/AtencionPadres';
 import TrabajoColegiado from './components/TrabajoColegiado';
 import ReunionesDocentes from './components/ReunionesDocentes';
 import ActividadesInstitucionales from './components/ActividadesInstitucionales';
+import Anecdotario from './components/Anecdotario';
 import Usuarios from './components/Usuarios';
 import Sedes from './components/Sedes';
-import { Users, ClipboardCheck, TrendingUp, AlertCircle, Home, LogOut, UserCog, MapPin, Handshake, Layout, MessageSquare, Award } from 'lucide-react';
+import { Users, ClipboardCheck, TrendingUp, AlertCircle, Home, LogOut, UserCog, MapPin, Handshake, Layout, MessageSquare, Award, BookOpen } from 'lucide-react';
 import logo from './assets/logo.png';
 import './index.css';
 
@@ -65,6 +66,7 @@ function App() {
     { id: 'trabajo-colegiado', name: 'Trabajo Colegiado', icon: <Layout size={32} />, color: '10, 80%, 50%' },
     { id: 'reuniones-docentes', name: 'Reuniones Docentes', icon: <MessageSquare size={32} />, color: '200, 70%, 45%' },
     { id: 'actividades-institucionales', name: 'Actividades Institucionales', icon: <Award size={32} />, color: '45, 90%, 50%' },
+    { id: 'anecdotario', name: 'Anecdotario', icon: <BookOpen size={32} />, color: '160, 80%, 40%' },
     // { id: 'usuarios', name: 'Gestión de Usuarios', icon: <UserCog size={32} />, color: '220, 70%, 50%' },
     // { id: 'sedes', name: 'Registro de Sedes', icon: <MapPin size={32} />, color: '30, 80%, 55%' },
   ];
@@ -87,6 +89,8 @@ function App() {
         return <ReunionesDocentes currentUser={user} />;
       case 'actividades-institucionales':
         return <ActividadesInstitucionales currentUser={user} />;
+      case 'anecdotario':
+        return <Anecdotario currentUser={user} />;
       /* Desactivados
       case 'usuarios':
         return <Usuarios />;

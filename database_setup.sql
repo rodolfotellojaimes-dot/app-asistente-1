@@ -56,3 +56,22 @@ BEGIN
         ALTER TABLE achievements ADD COLUMN descripcion_reto TEXT;
     END IF;
 END $$;
+
+-- Crear tabla para Anecdotario
+CREATE TABLE IF NOT EXISTS anecdotario (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    fecha DATE DEFAULT CURRENT_DATE,
+    grado TEXT NOT NULL,
+    seccion TEXT NOT NULL,
+    descripcion TEXT NOT NULL,
+    solucion TEXT,
+    registrado_por TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Habilitar RLS
+ALTER TABLE anecdotario ENABLE ROW LEVEL SECURITY;
+
+-- Políticas básicas
+CREATE POLICY "Permitir todo a usuarios autenticados" ON anecdotario FOR ALL USING (true);
+
